@@ -8,10 +8,17 @@ import { normalizeUserId } from './user-utils'
 
 // Categories API
 export const categoriesApi = {
-  async getAll(): Promise<Category[]> {
+  async getAll(userId?: string): Promise<Category[]> {
+    // user_idが提供されていない場合は、認証の状態をチェック
+    if (!userId) {
+      throw new Error('User ID is required for fetching categories')
+    }
+
+    const normalizedUserId = normalizeUserId(userId)
     const { data, error } = await supabase
       .from('categories')
       .select('*')
+      .eq('user_id', normalizedUserId)
       .order('type', { ascending: true })
       .order('name', { ascending: true })
 
@@ -19,11 +26,21 @@ export const categoriesApi = {
     return data || []
   },
 
-  async getByType(type: 'income' | 'expense'): Promise<Category[]> {
+  async getByType(
+    type: 'income' | 'expense',
+    userId?: string
+  ): Promise<Category[]> {
+    // user_idが提供されていない場合は、認証の状態をチェック
+    if (!userId) {
+      throw new Error('User ID is required for fetching categories')
+    }
+
+    const normalizedUserId = normalizeUserId(userId)
     const { data, error } = await supabase
       .from('categories')
       .select('*')
       .eq('type', type)
+      .eq('user_id', normalizedUserId)
       .order('name', { ascending: true })
 
     if (error) throw error
@@ -276,7 +293,17 @@ export const transactionsApi = {
     return data || []
   },
 
-  async getByMonth(year: number, month: number): Promise<Transaction[]> {
+  async getByMonth(
+    year: number,
+    month: number,
+    userId?: string
+  ): Promise<Transaction[]> {
+    // user_idが提供されていない場合は、認証の状態をチェック
+    if (!userId) {
+      throw new Error('User ID is required for fetching transactions')
+    }
+
+    const normalizedUserId = normalizeUserId(userId)
     const startDate = `${year}-${month.toString().padStart(2, '0')}-01`
     // Get the last day of the month correctly
     const lastDay = new Date(year, month, 0).getDate()
@@ -290,6 +317,7 @@ export const transactionsApi = {
         categories (*)
       `
       )
+      .eq('user_id', normalizedUserId)
       .gte('transaction_date', startDate)
       .lte('transaction_date', endDate)
       .order('transaction_date', { ascending: false })
@@ -303,11 +331,23 @@ export const transactionsApi = {
     transaction: Omit<
       Transaction,
       'id' | 'created_at' | 'updated_at' | 'categories' | 'user_id'
-    >
+    >,
+    userId?: string
   ): Promise<Transaction> {
+    // user_idが提供されていない場合は、認証の状態をチェック
+    if (!userId) {
+      throw new Error('User ID is required for creating transactions')
+    }
+
+    const normalizedUserId = normalizeUserId(userId)
+    const transactionWithUserId = {
+      ...transaction,
+      user_id: normalizedUserId,
+    }
+
     const { data, error } = await supabase
       .from('transactions')
-      .insert(transaction)
+      .insert(transactionWithUserId)
       .select(
         `
         *,

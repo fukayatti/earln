@@ -57,11 +57,18 @@ export default function AnalyticsPage() {
   }, [status, router])
 
   const loadInitialData = async () => {
+    if (!session?.user?.id) {
+      setError('ユーザー認証が必要です')
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
 
-      const [categoriesData] = await Promise.all([categoriesApi.getAll()])
+      const [categoriesData] = await Promise.all([
+        categoriesApi.getAll(session.user.id),
+      ])
       setCategories(categoriesData)
     } catch (err) {
       setError('データの読み込みに失敗しました')
@@ -72,6 +79,11 @@ export default function AnalyticsPage() {
   }
 
   const loadTransactions = useCallback(async () => {
+    if (!session?.user?.id) {
+      setError('ユーザー認証が必要です')
+      return
+    }
+
     try {
       let data: Transaction[] = []
 
@@ -79,7 +91,8 @@ export default function AnalyticsPage() {
         case 'month':
           data = await transactionsApi.getByMonth(
             selectedDate.year,
-            selectedDate.month
+            selectedDate.month,
+            session.user.id
           )
           break
         case 'quarter':
@@ -89,7 +102,8 @@ export default function AnalyticsPage() {
           for (let i = 0; i < 3; i++) {
             const monthData = await transactionsApi.getByMonth(
               selectedDate.year,
-              quarterStartMonth + i
+              quarterStartMonth + i,
+              session.user.id
             )
             data = [...data, ...monthData]
           }
@@ -99,7 +113,8 @@ export default function AnalyticsPage() {
           for (let month = 1; month <= 12; month++) {
             const monthData = await transactionsApi.getByMonth(
               selectedDate.year,
-              month
+              month,
+              session.user.id
             )
             data = [...data, ...monthData]
           }
@@ -111,7 +126,7 @@ export default function AnalyticsPage() {
       setError('取引データの読み込みに失敗しました')
       console.error('Error loading transactions:', err)
     }
-  }, [selectedDate, timeRange])
+  }, [selectedDate, timeRange, session?.user?.id])
 
   // Load initial data
   useEffect(() => {

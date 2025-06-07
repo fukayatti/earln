@@ -67,11 +67,18 @@ export default function TransactionsPage() {
   }, [session?.user])
 
   const loadInitialData = async () => {
+    if (!session?.user?.id) {
+      setError('ユーザー認証が必要です')
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
 
-      const [categoriesData] = await Promise.all([categoriesApi.getAll()])
+      const [categoriesData] = await Promise.all([
+        categoriesApi.getAll(session.user.id),
+      ])
       setCategories(categoriesData)
     } catch (err) {
       setError('データの読み込みに失敗しました')
@@ -82,17 +89,23 @@ export default function TransactionsPage() {
   }
 
   const loadTransactions = useCallback(async () => {
+    if (!session?.user?.id) {
+      setError('ユーザー認証が必要です')
+      return
+    }
+
     try {
       const data = await transactionsApi.getByMonth(
         selectedDate.year,
-        selectedDate.month
+        selectedDate.month,
+        session.user.id
       )
       setTransactions(data)
     } catch (err) {
       setError('記録データの読み込みに失敗しました')
       console.error('Error loading transactions:', err)
     }
-  }, [selectedDate])
+  }, [selectedDate, session?.user?.id])
 
   const applyFilters = useCallback(() => {
     let filtered = [...transactions]
@@ -175,8 +188,13 @@ export default function TransactionsPage() {
       'id' | 'created_at' | 'updated_at' | 'categories' | 'user_id'
     >
   ) => {
+    if (!session?.user?.id) {
+      setError('ユーザー認証が必要です')
+      return
+    }
+
     try {
-      await transactionsApi.create(transactionData)
+      await transactionsApi.create(transactionData, session.user.id)
       await loadTransactions()
     } catch (err) {
       setError('記録の追加に失敗しました')
