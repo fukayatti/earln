@@ -209,14 +209,14 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-8">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold">アナリティクス</h1>
           <p className="text-muted">詳細な財務分析とトレンド</p>
         </div>
 
         {/* Time Range Selector */}
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-4">
           <div className="flex items-center space-x-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <div className="flex items-center space-x-1">
